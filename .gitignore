@@ -1,0 +1,16 @@
+# Ignore the virtual environment folder
+.venv/
+
+# Ignore Python's cache directory
+__pycache__/
+
+# Ignore user-specific IDE files
+.idea/
+.vscode/
+
+# Ignore sensitive files
+credentials.ini
+*.env
+
+# Python build artifacts
+*.egg-info/

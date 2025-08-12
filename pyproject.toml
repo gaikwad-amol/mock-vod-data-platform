@@ -1,0 +1,7 @@
+[project]
+name = "vod_data_platform"
+version = "0.1.0"
+description = "Data platform for the VOD service"
+dependencies = [
+    "pyspark", "pandas", "boto3"
+]
