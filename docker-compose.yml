@@ -1,0 +1,67 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: spark-master
+    ports:
+      - "8080:8080"  # Spark Master Web UI
+      - "7077:7077"  # Spark Master Port
+    volumes:
+      # Maps your local './data/spark' folder for Spark-related files
+      - ./data/spark:/opt/bitnami/spark/data
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    container_name: spark-worker-1
+    depends_on:
+      - spark-master
+    volumes:
+      # Worker also needs access to the same Spark data folder
+      - ./data/spark:/opt/bitnami/spark/data
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+
+  jupyterlab:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyterlab
+    ports:
+      - "8888:8888" # JupyterLab UI
+      - "4040:4040" # Spark Job UI
+    volumes:
+      # Maps your local './data/notebooks' folder for saving your work
+      - ./data/notebooks:/home/jovyan/work
+      # Maps your local './data/spark' folder to access data files
+      - ./data/spark:/opt/bitnami/spark/data
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - JUPYTER_ENABLE_LAB=yes
+    depends_on:
+      - spark-master
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio_server
+    ports:
+      - "9000:9000"  # MinIO API Port
+      - "9001:9001"  # MinIO Console Port
+    volumes:
+      # Maps a local './data/minio' folder to persist MinIO's data
+      - ./data/minio:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+

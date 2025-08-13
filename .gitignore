@@ -14,3 +14,6 @@ credentials.ini
 
 # Python build artifacts
 *.egg-info/
+/sample_source_data/
+/data/
+/generated_content_ids.json

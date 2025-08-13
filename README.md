@@ -33,3 +33,25 @@ dependencies = [
 ]
 
 pip install .
+
+
+
+
+# Set credentials and endpoint for MinIO
+export AWS_ACCESS_KEY_ID="minioadmin"
+export AWS_SECRET_ACCESS_KEY="minioadmin"
+export MINIO_ENDPOINT="http://localhost:9000"
+
+# Set your real AWS credentials
+export AWS_ACCESS_KEY_ID="YOUR_REAL_AWS_ACCESS_KEY"
+export AWS_SECRET_ACCESS_KEY="YOUR_REAL_AWS_SECRET_KEY"
+unset MINIO_ENDPOINT # Ensure this is not set
+
+
+
+Commands to run
+python generate_content.py
+python generate_events.py
+copy the files to the minio using the UI.
+
+PYTHONPATH=src python -m vod_platform.jobs.bronze_manual_ingestion --process-datetime "2025-08-13T10:00:00"
