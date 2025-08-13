@@ -1,6 +1,6 @@
 # Ignore the virtual environment folder
 .venv/
-
+.DS_Store
 # Ignore Python's cache directory
 __pycache__/
 
