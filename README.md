@@ -45,6 +45,7 @@ pip install .
 ## Set credentials and endpoint for MinIO
 
 ```export AWS_ACCESS_KEY_ID="minioadmin"
+export AWS_ACCESS_KEY_ID="minioadmin"
 export AWS_SECRET_ACCESS_KEY="minioadmin"
 export MINIO_ENDPOINT="http://localhost:9000"
 ```
