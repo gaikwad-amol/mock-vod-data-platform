@@ -3,7 +3,7 @@
 pyenv versions
 pyenv latest 3.10
 cd mock-vod-data-platform
-pyenv -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 ```
 ## Folder structure for the project
@@ -46,6 +46,7 @@ pip install .
 
 ```export AWS_ACCESS_KEY_ID="minioadmin"
 export AWS_SECRET_ACCESS_KEY="minioadmin"
+export AWS_ACCESS_KEY_ID="minioadmin"
 export MINIO_ENDPOINT="http://localhost:9000"
 ```
 ## Set your real AWS credentials
@@ -63,4 +64,8 @@ python generate_events.py
 -- copy the files to the minio using the UI.
 
 PYTHONPATH=src python -m vod_platform.jobs.bronze_manual_ingestion --process-datetime "2025-08-13T10:00:00"
+```
+
+```shell
+podman exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && spark-submit vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-13T04:00:00'"
 ```
