@@ -5,8 +5,25 @@ from datetime import datetime
 from py4j.protocol import Py4JJavaError
 
 import pyspark.sql.functions as F
+from pyspark.sql.types import StructType, StructField, StringType, LongType
+
 from vod_platform.utils.spark_session import get_spark_session
 
+# This schema defines our expectations for the raw event data.
+events_schema = StructType([
+    StructField("event_id", StringType(), True),
+    StructField("user_id", StringType(), True),
+    StructField("content_id", StringType(), True),
+    StructField("event_type", StringType(), True),
+    StructField("timestamp", LongType(), True),
+    StructField("device_id", StringType(), True),
+    StructField("session_id", StringType(), True),
+    StructField("technical_context", StructType([
+        StructField("user_agent", StringType(), True),
+        StructField("app_version", StringType(), True),
+        StructField("os_type", StringType(), True),
+    ]), True)
+])
 
 def run_job(process_dt: datetime):
     spark = get_spark_session(app_name=f"VOD_Manual_Events_Ingestion_{process_dt:%Y-%m-%d-%H}")
@@ -60,6 +77,9 @@ def run_job(process_dt: datetime):
         print("=== Java stacktrace (string) ===")
         print(e.java_traceback)  # most useful — paste this into your next message
         raise
+    # raw_df_all = spark.read.parquet(base_source_path)
+    # earlier it was schema inference and now it is schema enforcement, data contract
+    # raw_df_all = spark.read.schema(events_schema).parquet(base_source_path)
 
     print("Full table schema discovered by Spark:")
     raw_df_all.printSchema()
