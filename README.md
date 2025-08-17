@@ -66,6 +66,8 @@ python generate_events.py
 PYTHONPATH=src python -m vod_platform.jobs.bronze_manual_ingestion --process-datetime "2025-08-13T10:00:00"
 ```
 
+Run below command to submit job to spark
+
 ```shell
 podman exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && spark-submit vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-13T04:00:00'"
 ```
