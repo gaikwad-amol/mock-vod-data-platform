@@ -3,5 +3,9 @@ name = "vod_data_platform"
 version = "0.1.0"
 description = "Data platform for the VOD service"
 dependencies = [
-    "pyspark", "pandas", "boto3"
+    "pyspark",
+    "pandas",
+    "boto3",
+    "faker>=37.5.3",
+    "pyarrow>=21.0.0"
 ]

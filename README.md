@@ -3,7 +3,7 @@
 pyenv versions
 pyenv latest 3.10
 cd mock-vod-data-platform
-pyenv -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 ```
 ## Folder structure for the project
@@ -47,6 +47,7 @@ pip install .
 ```export AWS_ACCESS_KEY_ID="minioadmin"
 export AWS_ACCESS_KEY_ID="minioadmin"
 export AWS_SECRET_ACCESS_KEY="minioadmin"
+export AWS_ACCESS_KEY_ID="minioadmin"
 export MINIO_ENDPOINT="http://localhost:9000"
 ```
 ## Set your real AWS credentials
@@ -64,4 +65,23 @@ python generate_events.py
 -- copy the files to the minio using the UI.
 
 PYTHONPATH=src python -m vod_platform.jobs.bronze_manual_ingestion --process-datetime "2025-08-13T10:00:00"
+```
+
+Run below command to submit job to spark
+
+```shell
+podman exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && spark-submit vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-13T04:00:00'"
+OR
+
+Below command in case facing hadoop user null related error. There are 2 ways either as root user or spark user
+docker exec -it --user root jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && \
+spark-submit \
+vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-11T05:00:00'"
+
+OR 
+docker exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && \
+spark-submit \
+--conf 'spark.driver.extraJavaOptions=-Duser.name=spark' \
+--conf 'spark.executor.extraJavaOptions=-Duser.name=spark' \
+vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-11T05:00:00'"
 ```

@@ -2,6 +2,8 @@
 
 import argparse
 from datetime import datetime
+from py4j.protocol import Py4JJavaError
+
 import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, StringType, LongType
 
@@ -26,14 +28,58 @@ events_schema = StructType([
 def run_job(process_dt: datetime):
     spark = get_spark_session(app_name=f"VOD_Manual_Events_Ingestion_{process_dt:%Y-%m-%d-%H}")
 
-    base_source_path = "s3a://source-bucket/video_views"
-    bronze_path = "s3a://vod-bronze-datalake/events/"
+    # conf = spark.sparkContext.getConf()
+    # print("spark.jars.packages:", conf.get("spark.jars.packages", "<none>"))
+    # print("spark.jars:", conf.get("spark.jars", "<none>"))
+    #
+    # cp = spark._jvm.java.lang.System.getProperty("java.class.path")
+    # print(cp)
+    # # optionally search for iceberg jars:
+    # print([p for p in cp.split(":") if "iceberg" in p.lower()])
+    #
+    # jlocation = spark._jvm.org.apache.iceberg.spark.SparkCatalog.getClass().getProtectionDomain().getCodeSource().getLocation()
+    # print("SparkCatalog loaded from:", jlocation)
+
+    # hconf = spark.sparkContext._jsc.hadoopConfiguration()
+    # it = hconf.iterator()
+    # while it.hasNext():
+    #     entry = it.next()
+    #     k = entry.getKey()
+    #     v = entry.getValue()
+    #     if k.startswith("fs.s3a."):
+    #         print(k, "=", v)
+
+    base_source_path = "s3a://raw/video_views"
+    bronze_table = "rest_catalog.bronze.raw_transactions"
 
     print(f"Reading from base source: {base_source_path}")
 
+    # --- ADD THESE LINES TO PAUSE THE SCRIPT ---
+    # print("=" * 50)
+    # print("Spark UI is now available at http://localhost:4040")
+    # print("The script is paused. Press Enter in this terminal to continue...")
+    # print("=" * 50)
+    # input()  # This will halt the program until you press Enter
+    # -------------------------------------------
+
+    try:
+        # the code that fails, e.g. reading or writing
+        raw_df_all = spark.read.parquet(base_source_path).repartition(100)
+    except Py4JJavaError as e:
+        print("=== Py4JJavaError: Python message ===")
+        print(e)  # short message
+        # full Java exception object (stringified)
+        try:
+            print("=== Java exception class ===")
+            print(type(e.java_exception), e.java_exception)
+        except Exception:
+            pass
+        print("=== Java stacktrace (string) ===")
+        print(e.java_traceback)  # most useful — paste this into your next message
+        raise
     # raw_df_all = spark.read.parquet(base_source_path)
     # earlier it was schema inference and now it is schema enforcement, data contract
-    raw_df_all = spark.read.schema(events_schema).parquet(base_source_path)
+    # raw_df_all = spark.read.schema(events_schema).parquet(base_source_path)
 
     print("Full table schema discovered by Spark:")
     raw_df_all.printSchema()
@@ -66,12 +112,17 @@ def run_job(process_dt: datetime):
     bronze_df.printSchema()
     print(f"Writing {bronze_df.count()} records to Bronze layer...")
     (
-        bronze_df.write
-        .mode("overwrite")
-        .partitionBy("region", "year", "month", "day", "hour")
-        .parquet(bronze_path)
+        bronze_df
+        .writeTo(bronze_table)
+        # .partitionBy("region", "year", "month", "day", "hour")
+        .createOrReplace()
     )
     print("Manual events ingestion for the hour complete.")
+
+    bronze_table_df = spark.table(bronze_table)
+    print(f"Verification: Reading from {bronze_table}. Count: {bronze_table_df.count()}")
+    bronze_table_df.show(5)
+
     spark.stop()
 
 

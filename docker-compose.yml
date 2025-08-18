@@ -3,29 +3,38 @@ version: '3.8'
 
 services:
   spark-master:
-    image: bitnami/spark:3.5.0
+    image: bitnami/spark:3.5
     container_name: spark-master
     ports:
       - "8080:8080"  # Spark Master Web UI
       - "7077:7077"  # Spark Master Port
     volumes:
-      # Maps your local './data/spark' folder for Spark-related files
-      - ./data/spark:/opt/bitnami/spark/data
+      - ./src/:/opt/bitnami/spark/src
+      # Mount the centralized configuration file
+      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - AWS_REGION=ap-south-1
 
   spark-worker:
-    image: bitnami/spark:3.5.0
+    image: bitnami/spark:3.5
     container_name: spark-worker-1
     depends_on:
       - spark-master
+    # --- ADD THESE LINES TO ALLOCATE MORE RESOURCES ---
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '5g'
     volumes:
-      # Worker also needs access to the same Spark data folder
-      - ./data/spark:/opt/bitnami/spark/data
+      - ./src/:/opt/bitnami/spark/src
+      # Mount the same centralized configuration file
+      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -33,21 +42,31 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - AWS_REGION=ap-south-1
 
   jupyterlab:
-    image: jupyter/pyspark-notebook:spark-3.5.0
+    image: bitnami/spark:3.5
     container_name: jupyterlab
     ports:
-      - "8888:8888" # JupyterLab UI
-      - "4040:4040" # Spark Job UI
+      - "8888:8888"
+      - "4040:4040"
     volumes:
-      # Maps your local './data/notebooks' folder for saving your work
       - ./data/notebooks:/home/jovyan/work
-      # Maps your local './data/spark' folder to access data files
-      - ./data/spark:/opt/bitnami/spark/data
+      - ./src:/opt/bitnami/spark/src
+      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+    deploy:
+      resources:
+        limits:
+          memory: 5g
     environment:
-      - SPARK_MASTER_URL=spark://spark-master:7077
+      # --- CRITICAL FIXES FOR JUPYTER/DRIVER ---
       - JUPYTER_ENABLE_LAB=yes
+      # Add credentials, which the driver needs to connect
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      # Add the endpoint so the driver knows where MinIO is
+      - MINIO_ENDPOINT=http://minio:9000
+      - AWS_REGION=ap-south-1
     depends_on:
       - spark-master
 
@@ -58,10 +77,28 @@ services:
       - "9000:9000"  # MinIO API Port
       - "9001:9001"  # MinIO Console Port
     volumes:
-      # Maps a local './data/minio' folder to persist MinIO's data
       - ./data/minio:/data
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
     command: server /data --console-address ":9001"
 
+  rest-catalog:
+    image: tabulario/iceberg-rest
+    container_name: rest-catalog
+    ports:
+      - "8181:8181"
+    environment:
+      - CATALOG_WAREHOUSE=s3://raw/
+      - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
+      - CATALOG_S3_ENDPOINT=http://minio:9000
+      # Use the CATALOG_ prefix for S3 properties, with double underscores for dots
+      - CATALOG_S3_ACCESS__KEY__ID=${AWS_ACCESS_KEY_ID}
+      - CATALOG_S3_SECRET__ACCESS__KEY=${AWS_SECRET_ACCESS_KEY}
+      # Also add path-style access for the catalog's client
+      - CATALOG_S3_PATH__STYLE__ACCESS=true
+      # Add the region for the catalog's client
+      - CATALOG_AWS__REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
