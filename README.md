@@ -71,4 +71,17 @@ Run below command to submit job to spark
 
 ```shell
 podman exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && spark-submit vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-13T04:00:00'"
+OR
+
+Below command in case facing hadoop user null related error. There are 2 ways either as root user or spark user
+docker exec -it --user root jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && \
+spark-submit \
+vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-11T05:00:00'"
+
+OR 
+docker exec -it jupyterlab /bin/bash -c "cd /opt/bitnami/spark/src/ && \
+spark-submit \
+--conf 'spark.driver.extraJavaOptions=-Duser.name=spark' \
+--conf 'spark.executor.extraJavaOptions=-Duser.name=spark' \
+vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-11T05:00:00'"
 ```
