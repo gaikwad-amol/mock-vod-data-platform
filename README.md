@@ -1,7 +1,7 @@
 ## Set the appropriate python version 
 ```
 pyenv versions
-pyenv latest 3.10
+pyenv latest 3.11
 cd mock-vod-data-platform
 python -m venv .venv
 source .venv/bin/activate

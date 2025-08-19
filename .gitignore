@@ -17,3 +17,4 @@ credentials.ini
 /sample_source_data/
 /data/
 /generated_content_ids.json
+/build/
