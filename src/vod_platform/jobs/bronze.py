@@ -19,15 +19,21 @@ def run_job(process_dt: date):
     print(f"Reading from base source: {file_path}")
     raw_events_df = spark.read.json(file_path)
 
-    bronze_df = raw_events_df.withColumn("event_datetime", to_date(col("timestamp")))
+    bronze_df = raw_events_df.withColumn(
+        "event_date",
+        (col("timestamp") / 1000).cast("timestamp").cast("date")
+    )
     if bronze_df.rdd.isEmpty():
         print("No data found for the specified date. Exiting cleanly.")
         return
 
-    # Write to the bronze Iceberg table, partitioned by the new date column.
-    # Use 'append' for daily jobs after the initial creation.
+    # # 2. (CRUCIAL DIAGNOSTIC STEP) Verify the partition column before writing
+    # print("Verifying partition key values and checking for nulls:")
+    # bronze_df.groupBy("event_date").count().orderBy("count", ascending=False).show()
+
     (
-        bronze_df.writeTo(bronze_table).partitionedBy(col="event_datetime")
+        bronze_df.writeTo(bronze_table)
+        .partitionedBy("event_date")
         .createOrReplace()
     )
 

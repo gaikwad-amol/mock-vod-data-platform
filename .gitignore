@@ -19,3 +19,5 @@ credentials.ini
 /generated_content_ids.json
 /build/
 data_from_s3
+/src/metastore_db/
+/src/derby.log
