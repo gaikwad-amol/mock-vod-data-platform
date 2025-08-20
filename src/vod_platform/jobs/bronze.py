@@ -1,0 +1,41 @@
+import argparse
+from datetime import date
+
+from pyspark.sql.functions import col, to_date
+
+from vod_platform.utils.spark_session import get_spark_session
+
+
+def run_job(process_dt: date):
+    spark = get_spark_session(app_name=f"VOD_Events_Ingestion_{process_dt:%Y-%m-%d}")
+    base_source_path = "s3a://vod/events"
+    bronze_table = "rest_catalog.vod_bronze.events"
+
+    spark.sql("CREATE DATABASE IF NOT EXISTS vod_bronze")
+    spark.sql("CREATE DATABASE IF NOT EXISTS vod_silver")
+    spark.sql("CREATE DATABASE IF NOT EXISTS vod_gold")
+
+    print(f"Reading from base source: {base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
+    raw_events_df = spark.read.json(f"{base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
+
+    bronze_df = raw_events_df.withColumn("event_datetime", to_date(col("timestamp")))
+    if bronze_df.rdd.isEmpty():
+        print("No data found for the specified date. Exiting cleanly.")
+        return
+
+    # Write to the bronze Iceberg table, partitioned by the new date column.
+    # Use 'append' for daily jobs after the initial creation.
+    (
+        bronze_df.writeTo(bronze_table).partitionedBy(col="event_datetime")
+        .createOrReplace()
+    )
+
+if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description="Run the VOD events ingestion job.")
+        parser.add_argument(
+            "--process-datetime", type=str, required=True,
+            help="The UTC datetime for the job run in 'YYYY-MM-DD' format.",
+        )
+        args = parser.parse_args()
+        job_datetime = date.fromisoformat(args.process_datetime)
+        run_job(process_dt=job_datetime)
