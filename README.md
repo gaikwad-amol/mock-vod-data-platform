@@ -102,3 +102,12 @@ SHOW TABLES;
 select * from raw_transactions limit 10;
 
 ```
+
+```commandline
+docker exec -it --user root spark-master /bin/bash -c "cd /opt/bitnami/spark/src/ && \
+spark-submit \
+vod_platform/jobs/bronze.py --process-datetime '2023-01-02'"
+
+USE rest_catalog.vod_bronze;
+select * from events limit 1;
+```

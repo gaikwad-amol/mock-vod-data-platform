@@ -8,7 +8,7 @@ from vod_platform.utils.spark_session import get_spark_session
 
 def run_job(process_dt: date):
     spark = get_spark_session(app_name=f"VOD_Events_Ingestion_{process_dt:%Y-%m-%d}")
-    base_source_path = "s3a://vod/events"
+    base_source_path = "s3a://vod/events/"
     bronze_table = "rest_catalog.vod_bronze.events"
 
     spark.sql("CREATE DATABASE IF NOT EXISTS vod_bronze")
@@ -18,15 +18,21 @@ def run_job(process_dt: date):
     print(f"Reading from base source: {base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
     raw_events_df = spark.read.json(f"{base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
 
-    bronze_df = raw_events_df.withColumn("event_datetime", to_date(col("timestamp")))
+    bronze_df = raw_events_df.withColumn(
+        "event_date",
+        (col("timestamp") / 1000).cast("timestamp").cast("date")
+    )
     if bronze_df.rdd.isEmpty():
         print("No data found for the specified date. Exiting cleanly.")
         return
 
-    # Write to the bronze Iceberg table, partitioned by the new date column.
-    # Use 'append' for daily jobs after the initial creation.
+    # # 2. (CRUCIAL DIAGNOSTIC STEP) Verify the partition column before writing
+    # print("Verifying partition key values and checking for nulls:")
+    # bronze_df.groupBy("event_date").count().orderBy("count", ascending=False).show()
+
     (
-        bronze_df.writeTo(bronze_table).partitionedBy(col="event_datetime")
+        bronze_df.writeTo(bronze_table)
+        .partitionedBy("event_date")
         .createOrReplace()
     )
 
