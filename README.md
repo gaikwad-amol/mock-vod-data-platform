@@ -85,3 +85,20 @@ spark-submit \
 --conf 'spark.executor.extraJavaOptions=-Duser.name=spark' \
 vod_platform/jobs/manual_events_ingestion.py --process-datetime '2025-08-11T05:00:00'"
 ```
+
+## Iceberg querying
+```commandline
+docker exec -it --user root jupyterlab /bin/bash
+spark-sql
+-- See the databases in your new catalog
+SHOW DATABASES IN rest_catalog;
+
+-- Switch to your new database
+USE rest_catalog.bronze;
+
+-- See the tables in the database
+SHOW TABLES;
+
+select * from raw_transactions limit 10;
+
+```
