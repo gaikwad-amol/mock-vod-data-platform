@@ -21,3 +21,5 @@ credentials.ini
 data_from_s3
 /src/metastore_db/
 /src/derby.log
+__marimo__/
+ivy_cache*/

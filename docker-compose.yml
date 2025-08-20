@@ -12,6 +12,7 @@ services:
       - ./src/:/opt/bitnami/spark/src
       # Mount the centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./ivy_cache/master:/tmp/.ivy2
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -35,6 +36,7 @@ services:
       - ./src/:/opt/bitnami/spark/src
       # Mount the same centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./ivy_cache/worker_1:/tmp/.ivy2
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -43,6 +45,18 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
+
+  spark-connect:
+    image: bitnami/spark:3.5
+    command: sbin/start-connect-server.sh --master spark://spark-master:7077 --packages org.apache.spark:spark-connect_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4
+    ports:
+      - "15002:15002"   # Spark Connect server port
+    volumes:
+      # Mount the same centralized configuration file
+      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./ivy_cache/connector:/tmp/.ivy2
+    depends_on:
+      - spark-master
 
   jupyterlab:
     image: jupyter/pyspark-notebook:latest
