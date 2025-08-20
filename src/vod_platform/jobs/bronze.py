@@ -26,15 +26,23 @@ def run_job(process_dt: date):
         print("No data found for the specified date. Exiting cleanly.")
         return
 
-    # # 2. (CRUCIAL DIAGNOSTIC STEP) Verify the partition column before writing
+    # (CRUCIAL DIAGNOSTIC STEP) Verify the partition column before writing
     # print("Verifying partition key values and checking for nulls:")
     # bronze_df.groupBy("event_date").count().orderBy("count", ascending=False).show()
 
-    (
-        bronze_df.writeTo(bronze_table)
-        .partitionedBy("event_date")
-        .createOrReplace()
-    )
+    if spark.catalog.tableExists(bronze_table):
+        print(f"Table {bronze_table} exists. Overwriting partition.")
+        (
+            bronze_df.writeTo(bronze_table)
+            .overwritePartitions()
+        )
+    else:
+        print(f"Table {bronze_table} does not exist. Creating it now.")
+        (
+            bronze_df.writeTo(bronze_table)
+            .partitionedBy("event_date")
+            .create()
+        )
 
 if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Run the VOD events ingestion job.")
