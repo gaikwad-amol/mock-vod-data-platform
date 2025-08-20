@@ -8,15 +8,16 @@ from vod_platform.utils.spark_session import get_spark_session
 
 def run_job(process_dt: date):
     spark = get_spark_session(app_name=f"VOD_Events_Ingestion_{process_dt:%Y-%m-%d}")
-    base_source_path = "s3a://vod/events"
+    base_source_path = "s3a://vod/events/"
     bronze_table = "rest_catalog.vod_bronze.events"
 
     spark.sql("CREATE DATABASE IF NOT EXISTS vod_bronze")
     spark.sql("CREATE DATABASE IF NOT EXISTS vod_silver")
     spark.sql("CREATE DATABASE IF NOT EXISTS vod_gold")
 
-    print(f"Reading from base source: {base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
-    raw_events_df = spark.read.json(f"{base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz")
+    file_path = f"{base_source_path}events_{process_dt:%Y-%m-%d}.jsonl.gz"
+    print(f"Reading from base source: {file_path}")
+    raw_events_df = spark.read.json(file_path)
 
     bronze_df = raw_events_df.withColumn("event_datetime", to_date(col("timestamp")))
     if bronze_df.rdd.isEmpty():

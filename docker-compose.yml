@@ -3,7 +3,7 @@ version: '3.8'
 
 services:
   spark-master:
-    image: bitnami/spark:3.5
+    image: my-spark:3.5
     container_name: spark-master
     ports:
       - "8080:8080"  # Spark Master Web UI
@@ -19,9 +19,12 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - MINIO_ENDPOINT=http://minio:9000
 
   spark-worker:
-    image: bitnami/spark:3.5
+    image: my-spark:3.5
     container_name: spark-worker-1
     depends_on:
       - spark-master
@@ -33,7 +36,7 @@ services:
           memory: '5g'
     volumes:
       - ./src/:/opt/bitnami/spark/src
-      # Mount the same centralized configuration file
+#       Mount the same centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
     environment:
       - SPARK_MODE=worker
@@ -43,6 +46,9 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - MINIO_ENDPOINT=http://minio:9000
 
   jupyterlab:
     image: jupyter/pyspark-notebook:latest
