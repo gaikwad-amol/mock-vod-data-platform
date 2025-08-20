@@ -18,3 +18,4 @@ credentials.ini
 /data/
 /generated_content_ids.json
 /build/
+data_from_s3
