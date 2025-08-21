@@ -110,4 +110,10 @@ vod_platform/jobs/bronze.py --process-datetime '2023-01-02'"
 
 USE rest_catalog.vod_bronze;
 select * from events limit 1;
+
+DUCKDB
+select * from 'data/content/movies.jsonl.gz' limit 10; 
+select * from 'data/users/users.jsonl.gz' limit 10; 
+select distinct event_type from 'data/events/*.jsonl.gz';
+
 ```
