@@ -3,7 +3,9 @@ import json
 
 import pendulum
 
-from airflow.sdk import dag, task
+from airflow.sdk import dag, task, get_current_context
+
+
 @dag(
     schedule=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
@@ -27,6 +29,8 @@ def tutorial_taskflow_api():
         pipeline. In this case, getting data is simulated by reading from a
         hardcoded JSON string.
         """
+        ctx = get_current_context()
+        print(ctx.get("logical_date"))
         data_string = '{"1001": 301.27, "1002": 433.21, "1003": 502.22}'
 
         order_data_dict = json.loads(data_string)
