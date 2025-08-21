@@ -26,12 +26,6 @@ services:
     container_name: spark-worker-1
     depends_on:
       - spark-master
-    # --- ADD THESE LINES TO ALLOCATE MORE RESOURCES ---
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: '5g'
     volumes:
       - ./src/:/opt/bitnami/spark/src
       # Mount the same centralized configuration file
@@ -76,10 +70,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - MINIO_ENDPOINT=http://minio:9000
       - AWS_REGION=ap-south-1
-    deploy:
-      resources:
-        limits:
-          memory: 5g
     depends_on:
       - spark-master
 

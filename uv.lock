@@ -143,6 +143,21 @@ wheels = [
 ]
 
 [[package]]
+name = "apache-airflow-providers-apache-spark"
+version = "5.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "apache-airflow" },
+    { name = "apache-airflow-providers-common-compat" },
+    { name = "grpcio-status" },
+    { name = "pyspark" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/d4/12c57a74d7adb1302f53bf712750cb5d1761a2dae0c3a2267d4c649a7fa6/apache_airflow_providers_apache_spark-5.3.2.tar.gz", hash = "sha256:fd0005f21b9b1b227c2eee2295530e05328022338ec3466c6b19497be08cda86", size = 124100 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/b3/60ce99a196e2e7efc911273ea236f08160c6e69d8510d337690b4684a511/apache_airflow_providers_apache_spark-5.3.2-py3-none-any.whl", hash = "sha256:2c5e45d8561c86460a4b474b49fcc9397f2065debcb42ede1a867d408a9fd938", size = 42426 },
+]
+
+[[package]]
 name = "apache-airflow-providers-common-compat"
 version = "1.7.3"
 source = { registry = "https://pypi.org/simple" }
@@ -655,6 +670,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/a7/fe2beab970a1e25d2eff108b3cf4f7d9a53c185106377a3d1989216eba45/grpcio-1.74.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:1bf949792cee20d2078323a9b02bacbbae002b9e3b9e2433f2741c15bdeba1c4", size = 6514228 },
     { url = "https://files.pythonhosted.org/packages/6a/c2/2f9c945c8a248cebc3ccda1b7a1bf1775b9d7d59e444dbb18c0014e23da6/grpcio-1.74.0-cp311-cp311-win32.whl", hash = "sha256:55b453812fa7c7ce2f5c88be3018fb4a490519b6ce80788d5913f3f9d7da8c7b", size = 3817216 },
     { url = "https://files.pythonhosted.org/packages/ff/d1/a9cf9c94b55becda2199299a12b9feef0c79946b0d9d34c989de6d12d05d/grpcio-1.74.0-cp311-cp311-win_amd64.whl", hash = "sha256:86ad489db097141a907c559988c29718719aa3e13370d40e20506f11b4de0d11", size = 4495380 },
+]
+
+[[package]]
+name = "grpcio-status"
+version = "1.74.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "googleapis-common-protos" },
+    { name = "grpcio" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/93/22/238c5f01e6837df54494deb08d5c772bc3f5bf5fb80a15dce254892d1a81/grpcio_status-1.74.0.tar.gz", hash = "sha256:c58c1b24aa454e30f1fc6a7e0dbbc194c54a408143971a94b5f4e40bb5831432", size = 13662 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/aa/1b1fe7d8ab699e1ec26d3a36b91d3df9f83a30abc07d4c881d0296b17b67/grpcio_status-1.74.0-py3-none-any.whl", hash = "sha256:52cdbd759a6760fc8f668098a03f208f493dd5c76bf8e02598bbbaf1f6fc2876", size = 14425 },
 ]
 
 [[package]]
@@ -1971,6 +2000,7 @@ name = "vod-data-platform"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "apache-airflow-providers-apache-spark" },
     { name = "apache-airflow-task-sdk" },
     { name = "boto3" },
     { name = "faker" },
@@ -1982,6 +2012,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "apache-airflow-providers-apache-spark", specifier = ">=5.3.2" },
     { name = "apache-airflow-task-sdk", specifier = ">=1.0.4" },
     { name = "boto3", specifier = ">=1.34.0" },
     { name = "faker", specifier = "~=25.0" },
