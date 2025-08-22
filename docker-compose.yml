@@ -5,6 +5,7 @@ services:
   spark-master:
     image: bitnami/spark:3.5
     container_name: spark-master
+    command: /bin/bash -c "pip install -r /opt/bitnami/spark/requirements.txt && /opt/bitnami/scripts/spark/run.sh"
     ports:
       - "8080:8080"  # Spark Master Web UI
       - "7077:7077"  # Spark Master Port
@@ -14,6 +15,7 @@ services:
       # Mount the centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./ivy_cache/master:/tmp/.ivy2
+      - ./requirements.txt:/opt/bitnami/spark/requirements.txt
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -21,10 +23,12 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
+      - SPARK_VERSION=3.5
 
   spark-worker:
     image: bitnami/spark:3.5
     container_name: spark-worker-1
+    command: /bin/bash -c "pip install -r /opt/bitnami/spark/requirements.txt && /opt/bitnami/scripts/spark/run.sh"
     depends_on:
       - spark-master
     volumes:
@@ -32,6 +36,7 @@ services:
       # Mount the same centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./ivy_cache/worker_1:/tmp/.ivy2
+      - ./requirements.txt:/opt/bitnami/spark/requirements.txt
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -40,6 +45,7 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
+      - SPARK_VERSION=3.5
 
   spark-connect:
     image: bitnami/spark:3.5
@@ -55,6 +61,28 @@ services:
       - AWS_REGION=ap-south-1
     depends_on:
       - spark-master
+
+  spark-worker-2:
+    image: bitnami/spark:3.5
+    container_name: spark-worker-2
+    command: /bin/bash -c "pip install -r /opt/bitnami/spark/requirements.txt && /opt/bitnami/scripts/spark/run.sh"
+    depends_on:
+      - spark-master
+    volumes:
+      - ./src/:/opt/bitnami/spark/src
+      # Mount the same centralized configuration file
+      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./ivy_cache/worker_1:/tmp/.ivy2
+      - ./requirements.txt:/opt/bitnami/spark/requirements.txt
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - AWS_REGION=ap-south-1
+      - SPARK_VERSION=3.5
 
 #  jupyterlab:
 #    image: jupyter/pyspark-notebook:latest
