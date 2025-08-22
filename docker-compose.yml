@@ -46,42 +46,47 @@ services:
       - SPARK_SSL_ENABLED=no
       - AWS_REGION=ap-south-1
 
-  spark-connect:
-    image: bitnami/spark:3.5
-    command: sbin/start-connect-server.sh --master spark://spark-master:7077 --packages org.apache.spark:spark-connect_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4
-    ports:
-      - "15002:15002"   # Spark Connect server port
-    volumes:
-      # Mount the same centralized configuration file
-      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-      - ./ivy_cache/connector:/tmp/.ivy2
-    depends_on:
-      - spark-master
+#  spark-connect:
+#    image: bitnami/spark:3.5
+#    command: sbin/start-connect-server.sh --master spark://spark-master:7077 --packages org.apache.spark:spark-connect_2.12:3.5.1,org.apache.hadoop:hadoop-aws:3.3.4
+#    ports:
+#      - "15002:15002"   # Spark Connect server port
+#    volumes:
+#      # Mount the same centralized configuration file
+#      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+#      - ./ivy_cache/connector:/tmp/.ivy2
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '1'
+#          memory: '1g'
+#    depends_on:
+#      - spark-master
 
-  jupyterlab:
-    image: jupyter/pyspark-notebook:latest
-    container_name: jupyterlab
-    ports:
-      - "8888:8888"
-      - "4040:4040"
-    volumes:
-      - ./data/notebooks:/home/jovyan/work
-      - ./src:/opt/bitnami/spark/src
-      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-    environment:
-      # Set the Spark Master URL for this container to connect to
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      # Add environment variables for accessing MinIO
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - MINIO_ENDPOINT=http://minio:9000
-      - AWS_REGION=ap-south-1
-    deploy:
-      resources:
-        limits:
-          memory: 5g
-    depends_on:
-      - spark-master
+#  jupyterlab:
+#    image: jupyter/pyspark-notebook:latest
+#    container_name: jupyterlab
+#    ports:
+#      - "8888:8888"
+#      - "4040:4040"
+#    volumes:
+#      - ./data/notebooks:/home/jovyan/work
+#      - ./src:/opt/bitnami/spark/src
+#      - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+#    environment:
+#      # Set the Spark Master URL for this container to connect to
+#      - SPARK_MASTER_URL=spark://spark-master:7077
+#      # Add environment variables for accessing MinIO
+#      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+#      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+#      - MINIO_ENDPOINT=http://minio:9000
+#      - AWS_REGION=ap-south-1
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 5g
+#    depends_on:
+#      - spark-master
 
   minio:
     image: minio/minio:latest
@@ -102,7 +107,7 @@ services:
     ports:
       - "8181:8181"
     environment:
-      - CATALOG_WAREHOUSE=s3a://raw/
+      - CATALOG_WAREHOUSE=s3a://vod/
       - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
       - CATALOG_S3_ENDPOINT=http://minio:9000
       # Use the CATALOG_ prefix for S3 properties, with double underscores for dots
