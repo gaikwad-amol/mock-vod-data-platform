@@ -57,6 +57,11 @@ services:
       # Mount the same centralized configuration file
       - ./conf/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./ivy_cache/connector:/tmp/.ivy2
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1g'
     environment:
       - AWS_REGION=ap-south-1
     depends_on:
