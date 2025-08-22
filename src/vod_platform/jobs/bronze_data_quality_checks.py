@@ -7,12 +7,19 @@ from pydeequ.checks import Check, CheckLevel, ConstrainableDataTypes
 from pydeequ.verification import VerificationSuite, VerificationResult
 from pydeequ.analyzers import (AnalysisRunner, AnalyzerContext,
                                Completeness, Mean, Size, Uniqueness, Distinctness, Entropy)
+from pydeequ.repository import FileSystemMetricsRepository, ResultKey
+from pydeequ.anomaly_detection import AbsoluteChangeStrategy
 
 logger = logging.getLogger(__name__)
 
 
 def run_data_quality_checks(spark: SparkSession, df: DataFrame, process_dt: date) -> bool:
-    # --- 1. Data Profiling with Analyzers ---
+    # --- 1. Configure and Use a Metrics Repository ---
+    logger.info("Setting up Metrics Repository...")
+    metrics_repository = FileSystemMetricsRepository(spark, "s3a://vod/deequ_metrics_repository/")
+    result_key = ResultKey(spark, ResultKey.current_milli_time(), {"process_date": process_dt.strftime('%Y-%m-%d')})
+
+    # --- 2. Data Profiling with Analyzers ---
     logger.info("Starting data profiling with Analyzers...")
     analysis_runner = AnalysisRunner(spark).onData(df)
 
@@ -72,9 +79,14 @@ def run_data_quality_checks(spark: SparkSession, df: DataFrame, process_dt: date
     )
 
     # Run the checks
-    verification_result = VerificationSuite(spark).onData(df).addCheck(check_suite).run()
+    verification_result = (VerificationSuite(spark)
+                           .onData(df)
+                           .addCheck(check_suite)
+                           .useRepository(metrics_repository)
+                           .addAnomalyCheck(
+        AbsoluteChangeStrategy(maxRateDecrease=-100000.0, maxRateIncrease=100000.0),
+        Size()).run())
     result_df = VerificationResult.checkResultsAsDataFrame(spark, verification_result)
-
     logger.info("Data Quality Check Results:")
     result_df.show(truncate=False)
 
@@ -83,4 +95,5 @@ def run_data_quality_checks(spark: SparkSession, df: DataFrame, process_dt: date
         return False
     else:
         logger.info("Data quality checks passed! Proceeding with ingestion. ✅")
+        logger.info(f"Saving successful metrics to repository with key: {result_key}")
         return True
